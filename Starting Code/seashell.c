@@ -457,8 +457,9 @@ int process_command(struct command_t *command)
                 char buffer[99999];
                 char *last_token;
                  while( fgets(buffer, 99999, fptr) != NULL ){  
-                    last_token = strtok( buffer, ":" );
-                    printf( "%s\n", last_token );
+                    //last_token = strtok( buffer, ":" );
+                    //printf( "%s\n", last_token );
+                    printf("%s", buffer);
                        
                  }
                  fclose(fptr);
