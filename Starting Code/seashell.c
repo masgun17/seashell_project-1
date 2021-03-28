@@ -6,6 +6,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
+
+
+#define WHICH_DELIMITER   ":"
+
 const char * sysname = "seashell";
 
 enum return_codes {
@@ -364,7 +368,157 @@ int process_command(struct command_t *command)
 		// set args[arg_count-1] (last) to NULL
 		command->args[command->arg_count-1]=NULL;
 
-		execvp(command->name, command->args); // exec+args+path
+		//execvp(command->name, command->args); // exec+args+path
+		
+		
+		// Part 2
+		if(strcmp(command->name,"shortdir")==0){	   	    		    
+		    char *comm = command->args[1];
+		    
+		    if( strcmp(comm,"set") == 0){
+		        char *name = command->args[2];
+		        char hold[1024];    // Temp string to hold the line information
+		        strcpy(hold,name);
+		        strcat(hold,":");
+		        char cwd[1024];     // Location information
+                getcwd(cwd, sizeof(cwd));
+                //char temploc[1024];     // Location information
+                //getcwd(temploc, sizeof(temploc));
+                strcat(hold,cwd);
+                strcat(cwd,"/shortdir.txt");
+                FILE *fptr;
+                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","a+");
+                char buffer[99999];
+                char *last_token;
+                
+                 while( fgets(buffer, 99999, fptr) != NULL ){  
+                    last_token = strtok( buffer, ":" );
+                    if(strcmp(last_token, name)==0){
+                        fclose(fptr);
+                        fptr = fopen("/home/mertcan/Desktop/shortdir.txt","a+");
+                        FILE *ftemp;
+                        ftemp = fopen("/home/mertcan/Desktop/tempshortdir.txt","a");
+                        char buffer2[99999];
+                        char *last_token2;
+                        while( fgets(buffer2, 99999, fptr) != NULL ){  
+                            last_token2 = strtok( buffer2, ":" );
+                            if(strcmp(last_token2,name)!=0){
+                                char line[200];
+                                strcpy(line, last_token2);
+                                last_token2 = strtok( NULL, ":" );
+                                strcat(line, ":");
+                                strcat(line, last_token2);
+                                fprintf(ftemp,"%s",line);
+                            }   
+                        }
+                        fclose(ftemp);
+                        fclose(fptr);
+                        rename("/home/mertcan/Desktop/tempshortdir.txt","/home/mertcan/Desktop/shortdir.txt");
+                        fptr = fopen("/home/mertcan/Desktop/shortdir.txt","a");
+                    }
+                         
+                 }
+
+                fprintf(fptr,"%s\n",hold);  // Write to file
+                printf("%s is set as an alias for %s\n", name, cwd);
+                fclose(fptr);
+                
+		    } else if(strcmp(comm,"del")==0){
+		        char *name = command->args[2];
+                FILE *fptr;
+                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","r");
+                FILE *ftemp;
+                ftemp = fopen("/home/mertcan/Desktop/tempshortdir.txt","a");
+                
+                char buffer[99999];
+                char *last_token;
+                 while( fgets(buffer, 99999, fptr) != NULL ){  
+                    last_token = strtok( buffer, ":" );
+                    if(strcmp(last_token,name)!=0){
+                        char line[200];
+                        strcpy(line, last_token);
+                        last_token = strtok( NULL, ":" );
+                        strcat(line,":");
+                        strcat(line, last_token);
+                        fprintf(ftemp,"%s",line);
+                    }   
+                 }
+                 fclose(ftemp);
+                 fclose(fptr);
+                 rename("/home/mertcan/Desktop/tempshortdir.txt","/home/mertcan/Desktop/shortdir.txt");
+		    } else if(strcmp(comm,"clear")==0){
+		        FILE *fptr;
+                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","w");
+                fclose(fptr);
+                
+		    } else if(strcmp(comm,"list")==0){
+		        FILE *fptr;
+                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","r");
+                char buffer[99999];
+                char *last_token;
+                 while( fgets(buffer, 99999, fptr) != NULL ){  
+                    last_token = strtok( buffer, ":" );
+                    printf( "%s\n", last_token );
+                       
+                 }
+                 fclose(fptr);
+		        
+		    } else if(strcmp(comm,"jump")==0){
+		        char *name = command->args[2];
+		        FILE *fptr;
+                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","r");
+                char buffer[99999];
+                char *last_token;
+                char line[200];
+                 while( fgets(buffer, 99999, fptr) != NULL ){  
+                    last_token = strtok( buffer, ":" );
+                    if(strcmp(last_token,name)==0){
+                        last_token = strtok( NULL, ":" );
+                        strcpy(line, last_token);
+                        //fprintf(ftemp,"%s",line);
+                    }   
+                       
+                 }
+                 fclose(fptr);
+                 const char* path =line;
+                 chdir(path);
+     
+		    }
+
+		}
+		else{
+		// Part 1
+		char *path = strdup(getenv("PATH"));
+        if (NULL == path) return NULL;
+        char *tok = strtok(path, WHICH_DELIMITER);
+        char location[1024];
+
+        while (tok) {
+        // path
+        int len = strlen(tok) + 2 + strlen(command->name);
+        char *file = malloc(len);
+        if (!file) {
+            free(path);
+            return NULL;
+        }
+        
+        sprintf(file, "%s/%s", tok, command->name);
+        
+        if (0 == access(file, X_OK)) {
+            free(path);
+            strcpy(location,file);
+            //printf("%s\n",location);
+        }
+
+        // next token
+        tok = strtok(NULL, WHICH_DELIMITER);
+        free(file);
+		}
+		
+		execv(location, command->args);
+		}
+		
+		
 		exit(0);
 		/// TODO: do your own exec with path resolving using execv()
 	}
