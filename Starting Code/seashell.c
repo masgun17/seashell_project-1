@@ -9,6 +9,10 @@
 
 
 #define WHICH_DELIMITER   ":"
+#define RED   "\x1B[31m"
+#define GREEN   "\x1B[32m"
+#define BLUE   "\x1B[34m"
+#define RESET "\x1B[0m"
 
 const char * sysname = "seashell";
 
@@ -374,6 +378,8 @@ int process_command(struct command_t *command)
 		// Part 2
 		if(strcmp(command->name,"shortdir")==0){	   	    		    
 		    char *comm = command->args[1];
+		    char *filePath = "/home/mertcan/Desktop/shortdir.txt";
+		    char *tempfilePath = "/home/mertcan/Desktop/tempshortdir.txt";
 		    
 		    if( strcmp(comm,"set") == 0){
 		        char *name = command->args[2];
@@ -382,12 +388,11 @@ int process_command(struct command_t *command)
 		        strcat(hold,":");
 		        char cwd[1024];     // Location information
                 getcwd(cwd, sizeof(cwd));
-                //char temploc[1024];     // Location information
-                //getcwd(temploc, sizeof(temploc));
+                char currPath[1024];
+                strcpy(currPath, cwd);
                 strcat(hold,cwd);
-                strcat(cwd,"/shortdir.txt");
                 FILE *fptr;
-                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","a+");
+                fptr = fopen(filePath,"a+");
                 char buffer[99999];
                 char *last_token;
                 
@@ -395,9 +400,9 @@ int process_command(struct command_t *command)
                     last_token = strtok( buffer, ":" );
                     if(strcmp(last_token, name)==0){
                         fclose(fptr);
-                        fptr = fopen("/home/mertcan/Desktop/shortdir.txt","a+");
+                        fptr = fopen(filePath,"a+");
                         FILE *ftemp;
-                        ftemp = fopen("/home/mertcan/Desktop/tempshortdir.txt","a");
+                        ftemp = fopen(tempfilePath,"a");
                         char buffer2[99999];
                         char *last_token2;
                         while( fgets(buffer2, 99999, fptr) != NULL ){  
@@ -413,22 +418,21 @@ int process_command(struct command_t *command)
                         }
                         fclose(ftemp);
                         fclose(fptr);
-                        rename("/home/mertcan/Desktop/tempshortdir.txt","/home/mertcan/Desktop/shortdir.txt");
-                        fptr = fopen("/home/mertcan/Desktop/shortdir.txt","a");
-                    }
-                         
+                        rename(tempfilePath,filePath);
+                        fptr = fopen(filePath,"a");
+                    }                
                  }
 
                 fprintf(fptr,"%s\n",hold);  // Write to file
-                printf("%s is set as an alias for %s\n", name, cwd);
+                printf("%s is set as an alias for %s\n", name, currPath);
                 fclose(fptr);
                 
 		    } else if(strcmp(comm,"del")==0){
 		        char *name = command->args[2];
                 FILE *fptr;
-                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","r");
+                fptr = fopen(filePath,"r");
                 FILE *ftemp;
-                ftemp = fopen("/home/mertcan/Desktop/tempshortdir.txt","a");
+                ftemp = fopen(tempfilePath,"a");
                 
                 char buffer[99999];
                 char *last_token;
@@ -445,15 +449,15 @@ int process_command(struct command_t *command)
                  }
                  fclose(ftemp);
                  fclose(fptr);
-                 rename("/home/mertcan/Desktop/tempshortdir.txt","/home/mertcan/Desktop/shortdir.txt");
+                 rename(tempfilePath,filePath);
 		    } else if(strcmp(comm,"clear")==0){
 		        FILE *fptr;
-                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","w");
+                fptr = fopen(filePath,"w");
                 fclose(fptr);
                 
 		    } else if(strcmp(comm,"list")==0){
 		        FILE *fptr;
-                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","r");
+                fptr = fopen(filePath,"r");
                 char buffer[99999];
                 char *last_token;
                  while( fgets(buffer, 99999, fptr) != NULL ){  
@@ -467,7 +471,7 @@ int process_command(struct command_t *command)
 		    } else if(strcmp(comm,"jump")==0){
 		        char *name = command->args[2];
 		        FILE *fptr;
-                fptr = fopen("/home/mertcan/Desktop/shortdir.txt","r");
+                fptr = fopen(filePath,"r");
                 char buffer[99999];
                 char *last_token;
                 char line[200];
@@ -476,9 +480,7 @@ int process_command(struct command_t *command)
                     if(strcmp(last_token,name)==0){
                         last_token = strtok( NULL, ":" );
                         strcpy(line, last_token);
-                        //fprintf(ftemp,"%s",line);
-                    }   
-                       
+                    }                          
                  }
                  fclose(fptr);
                  const char* path =line;
@@ -487,7 +489,55 @@ int process_command(struct command_t *command)
 		    }
 
 		}
-		else{
+		// Part 3
+		else if(strcmp(command->name,"highlight")==0){
+		    char *word = command->args[1];
+		    char *file = command->args[3];
+		    char *color = command->args[2];
+		    
+		    FILE *fptr;
+		    fptr = fopen(file,"r");
+		    char buffer[99999];
+		    char *last_token;
+		    char delim[] = {" ,.:;\t\r\n\v\f\0"};
+		    while( fgets(buffer, 99999, fptr) != NULL ){  
+		            char currentLine[1024];
+		            strcpy(currentLine, buffer);
+		            //printf(currentLine);
+		            int flag = 0;
+                    last_token = strtok( buffer, delim );
+                     while( last_token != NULL ){
+                        if(strcasecmp(last_token,word)==0){
+                            flag = 1;
+                        }
+                        last_token = strtok( NULL, delim );
+                    }
+                    if(flag == 1){
+                        //printf("%s", currentLine);
+                        char *inLineToken = strtok(currentLine, delim);
+                        while(inLineToken){
+                            if( strcasecmp(inLineToken, word) ==0){
+                                if( strcmp(color, "r") == 0){
+                                    printf(RED "%s ", inLineToken);
+                                    printf(RESET);
+                                } else if (strcmp(color, "g") == 0){
+                                    printf(GREEN "%s ", inLineToken);
+                                    printf(RESET);
+                                } else if ( strcmp(color, "b") == 0){
+                                    printf(BLUE "%s ", inLineToken);
+                                    printf(RESET);
+                                }   
+                            } else {
+                                printf("%s ", inLineToken);
+                            }
+                            inLineToken = strtok(NULL,delim);
+                        }
+                        printf(".\n");
+                    }                        
+             }
+
+		    
+		} else {
 		// Part 1
 		char *path = strdup(getenv("PATH"));
         if (NULL == path) return NULL;
