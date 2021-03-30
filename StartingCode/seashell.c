@@ -377,7 +377,7 @@ int process_command(struct command_t *command)
 
 		//execvp(command->name, command->args); // exec+args+path
 		
-/*---------------------------------------------------------------------------------------*/		
+/*---------------------------------------------------------------------------------------------------------------------------------------------*/		
 		// Part 2
 		if(strcmp(command->name,"shortdir")==0){	   	    		    
 		    char *comm = command->args[1];
@@ -538,36 +538,36 @@ int process_command(struct command_t *command)
              }
              
 		} else {
-		// Part 1
-		char *path = strdup(getenv("PATH"));
-        if (NULL == path) return NULL;
-        char *tok = strtok(path, WHICH_DELIMITER);  // Tokenize environment paths with ":"
-        char location[1024];
+		    // Part 1
+		    char *path = strdup(getenv("PATH"));
+            if (NULL == path) return NULL;
+            char *tok = strtok(path, WHICH_DELIMITER);  // Tokenize environment paths with ":"
+            char location[1024];
 
-        while (tok) {
-        // path
-        int len = strlen(tok) + 2 + strlen(command->name);
-        char *file = malloc(len);
-        if (!file) {    // If file does not exist in given path, free the memory
-            free(path);
-            return NULL;
-        }
+            while (tok) {
+                // path
+                int len = strlen(tok) + 2 + strlen(command->name);
+                char *file = malloc(len);
+                if (!file) {    // If file does not exist in given path, free the memory
+                    free(path);
+                    return NULL;
+                }
         
-        sprintf(file, "%s/%s", tok, command->name);     // Desired format for wanted command
+                sprintf(file, "%s/%s", tok, command->name);     // Desired format for wanted command
         
-        if (0 == access(file, X_OK)) {  // If file is openable
-            free(path);
-            strcpy(location,file);  // Copy the location information and pass it to execv in below
-        }
+                if (0 == access(file, X_OK)) {  // If file is openable
+                    free(path);
+                    strcpy(location,file);  // Copy the location information and pass it to execv in below
+                }
 
-        // next token
-        tok = strtok(NULL, WHICH_DELIMITER);
-        free(file);
-		}
+                // next token
+                tok = strtok(NULL, WHICH_DELIMITER);
+                free(file);
+		    }
 		
-		execv(location, command->args);
+		    execv(location, command->args);
 		}	
-/*-------------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------------------------------------------------------------------*/
 		exit(0);
 		/// TODO: do your own exec with path resolving using execv()
 	}
