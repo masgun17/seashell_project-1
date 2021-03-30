@@ -7,12 +7,15 @@
 #include <stdbool.h>
 #include <errno.h>
 
-
+/*-------------------------------------------*/
+// For Part 1
 #define WHICH_DELIMITER   ":"
+// For Part 3
 #define RED   "\x1B[31m"
 #define GREEN   "\x1B[32m"
 #define BLUE   "\x1B[34m"
 #define RESET "\x1B[0m"
+/*-------------------------------------------*/
 
 const char * sysname = "seashell";
 
@@ -374,14 +377,14 @@ int process_command(struct command_t *command)
 
 		//execvp(command->name, command->args); // exec+args+path
 		
-		
+/*---------------------------------------------------------------------------------------*/		
 		// Part 2
 		if(strcmp(command->name,"shortdir")==0){	   	    		    
 		    char *comm = command->args[1];
 		    char *filePath = "/home/mertcan/Desktop/shortdir.txt";
 		    char *tempfilePath = "/home/mertcan/Desktop/tempshortdir.txt";
 		    
-		    if( strcmp(comm,"set") == 0){
+		    if( strcmp(comm,"set") == 0){   // shortdir set - command
 		        char *name = command->args[2];
 		        char hold[1024];    // Temp string to hold the line information
 		        strcpy(hold,name);
@@ -392,22 +395,22 @@ int process_command(struct command_t *command)
                 strcpy(currPath, cwd);
                 strcat(hold,cwd);
                 FILE *fptr;
-                fptr = fopen(filePath,"a+");
+                fptr = fopen(filePath,"a+");    // Need both append and reading modes
                 char buffer[99999];
                 char *last_token;
                 
                  while( fgets(buffer, 99999, fptr) != NULL ){  
                     last_token = strtok( buffer, ":" );
-                    if(strcmp(last_token, name)==0){
-                        fclose(fptr);
+                    if(strcmp(last_token, name)==0){    // If a given name is already an existing association
+                        fclose(fptr);   // To do not mess up with open files, close it and reopen it
                         fptr = fopen(filePath,"a+");
-                        FILE *ftemp;
+                        FILE *ftemp;    // Temporary file to hold the original file with deleted line
                         ftemp = fopen(tempfilePath,"a");
                         char buffer2[99999];
                         char *last_token2;
                         while( fgets(buffer2, 99999, fptr) != NULL ){  
                             last_token2 = strtok( buffer2, ":" );
-                            if(strcmp(last_token2,name)!=0){
+                            if(strcmp(last_token2,name)!=0){    // Copy all the lines except the one with given name
                                 char line[200];
                                 strcpy(line, last_token2);
                                 last_token2 = strtok( NULL, ":" );
@@ -416,21 +419,21 @@ int process_command(struct command_t *command)
                                 fprintf(ftemp,"%s",line);
                             }   
                         }
-                        fclose(ftemp);
+                        fclose(ftemp);  // Close both files
                         fclose(fptr);
-                        rename(tempfilePath,filePath);
-                        fptr = fopen(filePath,"a");
+                        rename(tempfilePath,filePath);  // Change the name of temporary file to original file name
+                        fptr = fopen(filePath,"a"); // Reopen the file
                     }                
                  }
 
                 fprintf(fptr,"%s\n",hold);  // Write to file
-                printf("%s is set as an alias for %s\n", name, currPath);
+                printf("%s is set as an alias for %s\n", name, currPath);   // Print to console
                 fclose(fptr);
                 
 		    } else if(strcmp(comm,"del")==0){
 		        char *name = command->args[2];
                 FILE *fptr;
-                fptr = fopen(filePath,"r");
+                fptr = fopen(filePath,"r"); // Open in read only
                 FILE *ftemp;
                 ftemp = fopen(tempfilePath,"a");
                 
@@ -438,7 +441,7 @@ int process_command(struct command_t *command)
                 char *last_token;
                  while( fgets(buffer, 99999, fptr) != NULL ){  
                     last_token = strtok( buffer, ":" );
-                    if(strcmp(last_token,name)!=0){
+                    if(strcmp(last_token,name)!=0){     // Copy all the lines except the one with given name
                         char line[200];
                         strcpy(line, last_token);
                         last_token = strtok( NULL, ":" );
@@ -450,10 +453,10 @@ int process_command(struct command_t *command)
                  fclose(ftemp);
                  fclose(fptr);
                  rename(tempfilePath,filePath);
-		    } else if(strcmp(comm,"clear")==0){
+		    } else if(strcmp(comm,"clear")==0){     
 		        FILE *fptr;
-                fptr = fopen(filePath,"w");
-                fclose(fptr);
+                fptr = fopen(filePath,"w");     // Opening a file in writing mode removes all entries in the file,
+                fclose(fptr);                   // which is enough for our purpose
                 
 		    } else if(strcmp(comm,"list")==0){
 		        FILE *fptr;
@@ -461,14 +464,14 @@ int process_command(struct command_t *command)
                 char buffer[99999];
                 char *last_token;
                  while( fgets(buffer, 99999, fptr) != NULL ){  
-                    //last_token = strtok( buffer, ":" );
+                    //last_token = strtok( buffer, ":" );   // Prints only the corresponding names
                     //printf( "%s\n", last_token );
-                    printf("%s", buffer);
+                    printf("%s", buffer);               // Prints all the line
                        
                  }
                  fclose(fptr);
 		        
-		    } else if(strcmp(comm,"jump")==0){
+		    } else if(strcmp(comm,"jump")==0){      // Does not work as intended
 		        char *name = command->args[2];
 		        FILE *fptr;
                 fptr = fopen(filePath,"r");
@@ -484,7 +487,7 @@ int process_command(struct command_t *command)
                  }
                  fclose(fptr);
                  const char* path =line;
-                 chdir(path);
+                 chdir(path);       // Does not change directory.
      
 		    }
 
@@ -496,15 +499,14 @@ int process_command(struct command_t *command)
 		    char *color = command->args[2];
 		    
 		    FILE *fptr;
-		    fptr = fopen(file,"r");
+		    fptr = fopen(file,"r");     // Open the file in read only mode
 		    char buffer[99999];
 		    char *last_token;
-		    char delim[] = {" ,.:;\t\r\n\v\f\0"};
+		    char delim[] = {" ,.:;\t\r\n\v\f\0"};       // Delimiters to tokenize the text file
 		    while( fgets(buffer, 99999, fptr) != NULL ){  
 		            char currentLine[1024];
 		            strcpy(currentLine, buffer);
-		            //printf(currentLine);
-		            int flag = 0;
+		            int flag = 0;   // Flag to show, whether given word is included in that line
                     last_token = strtok( buffer, delim );
                      while( last_token != NULL ){
                         if(strcasecmp(last_token,word)==0){
@@ -512,11 +514,10 @@ int process_command(struct command_t *command)
                         }
                         last_token = strtok( NULL, delim );
                     }
-                    if(flag == 1){
-                        //printf("%s", currentLine);
+                    if(flag == 1){  // If given word is included in that line
                         char *inLineToken = strtok(currentLine, delim);
                         while(inLineToken){
-                            if( strcasecmp(inLineToken, word) ==0){
+                            if( strcasecmp(inLineToken, word) ==0){     // Case-insensitive comparing
                                 if( strcmp(color, "r") == 0){
                                     printf(RED "%s ", inLineToken);
                                     printf(RESET);
@@ -535,30 +536,28 @@ int process_command(struct command_t *command)
                         printf(".\n");
                     }                        
              }
-
-		    
+             
 		} else {
 		// Part 1
 		char *path = strdup(getenv("PATH"));
         if (NULL == path) return NULL;
-        char *tok = strtok(path, WHICH_DELIMITER);
+        char *tok = strtok(path, WHICH_DELIMITER);  // Tokenize environment paths with ":"
         char location[1024];
 
         while (tok) {
         // path
         int len = strlen(tok) + 2 + strlen(command->name);
         char *file = malloc(len);
-        if (!file) {
+        if (!file) {    // If file does not exist in given path, free the memory
             free(path);
             return NULL;
         }
         
-        sprintf(file, "%s/%s", tok, command->name);
+        sprintf(file, "%s/%s", tok, command->name);     // Desired format for wanted command
         
-        if (0 == access(file, X_OK)) {
+        if (0 == access(file, X_OK)) {  // If file is openable
             free(path);
-            strcpy(location,file);
-            //printf("%s\n",location);
+            strcpy(location,file);  // Copy the location information and pass it to execv in below
         }
 
         // next token
@@ -567,9 +566,8 @@ int process_command(struct command_t *command)
 		}
 		
 		execv(location, command->args);
-		}
-		
-		
+		}	
+/*-------------------------------------------------------------------------------------------*/
 		exit(0);
 		/// TODO: do your own exec with path resolving using execv()
 	}
