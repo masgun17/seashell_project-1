@@ -627,10 +627,10 @@ int process_command(struct command_t *command)
                 } 
 		    }
 		
-		}
-		
-		else {
-		    // Part 1
+        }
+        
+        // Part 1
+        else {
             char *path = strdup(getenv("PATH"));
             if (NULL == path) return NULL;
             char *tok = strtok(path, WHICH_DELIMITER);  // Tokenize environment paths with ":"
