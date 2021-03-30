@@ -537,9 +537,101 @@ int process_command(struct command_t *command)
                     }                        
              }
              
-		} else {
+		}
+		// Part 4
+		else if(strcmp(command->name,"goodMorning")==0){
+		    char alarmfilePath[1024];     // Location information
+            getcwd(alarmfilePath, sizeof(alarmfilePath)); 
+            strcat(alarmfilePath, "/alarm.txt");    // Create a file called "alarm.txt" at the current location
+		    char *time = command->args[1];
+		    char *musicFile = command->args[2];
+		    FILE *falarm;
+		    falarm = fopen(alarmfilePath,"w");
+		   
+		    char s[256];
+		    strcpy(s, time);
+		    char * hour = strtok(s, ".");   // Tokenize the time entered by user
+		    char * minute = strtok(NULL, ".");
+		    fprintf(falarm, "%s %s * * * XDG_RUNTIME_DIR=/run/user/$(id -u) /usr/bin/rhythmbox-client --play %s\n", minute, hour, musicFile);
+		    fclose(falarm); 
+		    execlp("crontab","crontab", alarmfilePath, NULL);
+		}
+		
+		//Part 5
+		else if(strcmp(command->name, "kdiff") == 0){
+		    char *flag = command->args[1];
+		    char *file1 = command->args[2];
+		    char *file2 = command->args[3];
+		    
+		    if( strcmp(flag, "-a") ==0) {   // Compare line by line
+		        FILE *fPtr1;
+		        FILE *fPtr2;
+                fPtr1 = fopen(file1,"r");
+                fPtr2 = fopen(file2,"r");
+                char lines1[1000][1000];    // 2D array to hold the lines of file 1
+                char lines2[1000][1000];    // 2D array to hold the lines of file 2
+                int number = 0;
+                int totalMistakes = 0;
+                
+                char buffer1[99999];
+                while( fgets(buffer1, 99999, fPtr1) != NULL ){  // Populate array 1
+                    strcpy(lines1[number],buffer1);
+                    number++;                  
+                }
+                fclose(fPtr1);
+                
+                number = 0;
+                char buffer2[99999];
+                while( fgets(buffer2, 99999, fPtr2) != NULL ){  // Populate array 2
+                    strcpy(lines2[number],buffer2);
+                    number++;                  
+                }
+                fclose(fPtr2);
+
+                for(int i =0; i<number; i++){   // Compare 2 array, line by line
+                    if(strcmp( lines1[i], lines2[i]) != 0){
+                        totalMistakes++;
+                        printf("%s:Line %d: %s", file1, i+1, lines1[i]);
+                        printf("%s:Line %d: %s", file2, i+1, lines2[i]);
+                    }
+                }
+                
+                if(totalMistakes == 0){
+                    printf("%s","The two files are identical\n");
+                }else{
+                    printf("%d different lines found\n",totalMistakes);
+                }
+                  
+		    } else if( strcmp(flag, "-b") ==0) {    // Compare byte by byte
+                FILE *fPtr1;
+		        FILE *fPtr2;
+                fPtr1 = fopen(file1,"rb");  // Open in rad byte mode
+                fPtr2 = fopen(file2,"rb");
+                
+                unsigned long pos;
+                int c1, c2;
+                int totalMistakes= 0;
+                for (pos = 0;; pos++) {     // Read a byte from both files and compare
+                    c1 = getc(fPtr1);
+                    c2 = getc(fPtr2);
+                    if (c1 != c2){
+                    totalMistakes += 1;
+                }
+                if (c1 == EOF || c1 == EOF)
+                    break;
+                }
+                if (totalMistakes == 0) {
+                    printf("The two files are identical and have %lu bytes\n", pos);
+                } else{
+                    printf("The two files are different in %d bytes", totalMistakes);
+                } 
+		    }
+		
+		}
+		
+		else {
 		    // Part 1
-		    char *path = strdup(getenv("PATH"));
+            char *path = strdup(getenv("PATH"));
             if (NULL == path) return NULL;
             char *tok = strtok(path, WHICH_DELIMITER);  // Tokenize environment paths with ":"
             char location[1024];
@@ -563,10 +655,10 @@ int process_command(struct command_t *command)
                 // next token
                 tok = strtok(NULL, WHICH_DELIMITER);
                 free(file);
-		    }
+            }
 		
-		    execv(location, command->args);
-		}	
+            execv(location, command->args);
+        }	
 /*---------------------------------------------------------------------------------------------------------------------------------------------*/
 		exit(0);
 		/// TODO: do your own exec with path resolving using execv()

@@ -1,0 +1,11 @@
+A quick brown fox jumps over the lazy dog
+A swift squirrel climbs the tree
+Corona cases today 300
+Merhaba, benim adım Emre.
+The programming language used for this code is C.
+The first three letters of English Language are A B and C.
+In this part, you will implement the highlight command that takes a word-color pair and a text file as an input. 
+The colors can be one of the r (red), g (green) or b (blue) color.
+The Word check is not case-sensitive.
+The command syntax and its sample usage are as shown below.
+For each instance of the word appearing in th text file, the command prints the line where the word appears
