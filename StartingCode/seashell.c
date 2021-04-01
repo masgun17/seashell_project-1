@@ -627,8 +627,52 @@ int process_command(struct command_t *command)
                 } 
 		    }
 		
+        }// Part 6
+		else if(strcmp(command->name,"zoom")==0){
+		// -s save -o open -d delete
+		    char *mode = command->args[1];
+		    char *class_name = command->args[2];
+		    
+	 	    char *fileName = "zoom_classes.txt";
+		  
+		  
+		    FILE *fptr;
+		    fptr = fopen(fileName,"a+");    // Need both append and reading modes
+                 
+                   
+		    if( strcmp(mode, "-s") ==0) {   //save a class
+		   char *link = command->args[3];
+		   char *password = command->args[4];	
+		   char *saved_class[99999];
+		   strcpy(saved_class,class_name);
+		   strcat(saved_class," ");
+		   strcat(saved_class,link);
+		   strcat(saved_class," ");
+                   strcat(saved_class,password);  
+		   fprintf(fptr,"%s\n",saved_class);
+		   fclose(fptr);
+		    
+		  
+        }else if( strcmp(mode, "-o") ==0) {
+         char buffer[99999];
+         
+        char *last_token;
+         while( fgets(buffer, 99999, fptr) != NULL ){  
+            last_token = strtok( buffer, " " );
+            
+            if(strcmp(last_token,class_name)==0){    
+                char *link =  strtok( NULL, " " );    
+                char *password  = strtok( NULL, " " );
+                printf("Password for the class is: %s\n",password);             
+                char *xdg[99999];
+                strcat(xdg,"xdg-open ");
+                strcat(xdg,link);
+                system(xdg);
+                fclose(fptr);
+            }   
+         }      
+        } 
         }
-        
         // Part 1
         else {
             char *path = strdup(getenv("PATH"));
