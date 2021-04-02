@@ -462,10 +462,7 @@ int process_command(struct command_t *command)
 		        FILE *fptr;
                 fptr = fopen(filePath,"r");
                 char buffer[99999];
-                char *last_token;
                  while( fgets(buffer, 99999, fptr) != NULL ){  
-                    //last_token = strtok( buffer, ":" );   // Prints only the corresponding names
-                    //printf( "%s\n", last_token );
                     printf("%s", buffer);               // Prints all the line
                        
                  }
@@ -560,118 +557,206 @@ int process_command(struct command_t *command)
 		//Part 5
 		else if(strcmp(command->name, "kdiff") == 0){
 		    char *flag = command->args[1];
-		    char *file1 = command->args[2];
-		    char *file2 = command->args[3];
+		    char file1[100];
+		    char file2[100];
 		    
-		    if( strcmp(flag, "-a") ==0) {   // Compare line by line
-		        FILE *fPtr1;
-		        FILE *fPtr2;
-                fPtr1 = fopen(file1,"r");
-                fPtr2 = fopen(file2,"r");
-                char lines1[1000][1000];    // 2D array to hold the lines of file 1
-                char lines2[1000][1000];    // 2D array to hold the lines of file 2
-                int number = 0;
-                int totalMistakes = 0;
-                
-                char buffer1[99999];
-                while( fgets(buffer1, 99999, fPtr1) != NULL ){  // Populate array 1
-                    strcpy(lines1[number],buffer1);
-                    number++;                  
-                }
-                fclose(fPtr1);
-                
-                number = 0;
-                char buffer2[99999];
-                while( fgets(buffer2, 99999, fPtr2) != NULL ){  // Populate array 2
-                    strcpy(lines2[number],buffer2);
-                    number++;                  
-                }
-                fclose(fPtr2);
+		    if(flag == NULL) {
+		        printf("Please enter at least 2 file names\n");
+		    } else if(command->args[2] == NULL){
+		        printf("Please enter a valid number of arguments\n");
+		    } else {
+		        if(command->args[3] == NULL){   
+		            strcpy(file1, command->args[1]);
+		            strcpy(file2, command->args[2]);
+		            strcpy(flag, "-a");
+		        } else {
+		            strcpy(file1,command->args[2]);
+		            strcpy(file2,command->args[3]);
+		        }   
 
-                for(int i =0; i<number; i++){   // Compare 2 array, line by line
-                    if(strcmp( lines1[i], lines2[i]) != 0){
-                        totalMistakes++;
-                        printf("%s:Line %d: %s", file1, i+1, lines1[i]);
-                        printf("%s:Line %d: %s", file2, i+1, lines2[i]);
+		        if( strcmp(flag, "-a") ==0) {   // Compare line by line
+		            FILE *fPtr1;
+		            FILE *fPtr2;
+                    fPtr1 = fopen(file1,"r");
+                    fPtr2 = fopen(file2,"r");
+                    char lines1[1000][1000];    // 2D array to hold the lines of file 1
+                    char lines2[1000][1000];    // 2D array to hold the lines of file 2
+                    int number = 0;
+                    int totalMistakes = 0;
+                
+                    char buffer1[99999];
+                    while( fgets(buffer1, 99999, fPtr1) != NULL ){  // Populate array 1
+                        strcpy(lines1[number],buffer1);
+                        number++;                  
                     }
-                }
+                    fclose(fPtr1);
                 
-                if(totalMistakes == 0){
-                    printf("%s","The two files are identical\n");
-                }else{
-                    printf("%d different lines found\n",totalMistakes);
-                }
+                    number = 0;
+                    char buffer2[99999];
+                    while( fgets(buffer2, 99999, fPtr2) != NULL ){  // Populate array 2
+                        strcpy(lines2[number],buffer2);
+                        number++;                  
+                    }
+                    fclose(fPtr2);
+
+                    for(int i =0; i<number; i++){   // Compare 2 array, line by line
+                        if(strcmp( lines1[i], lines2[i]) != 0){
+                            totalMistakes++;
+                            printf("%s:Line %d: %s", file1, i+1, lines1[i]);
+                            printf("%s:Line %d: %s", file2, i+1, lines2[i]);
+                        }
+                    }
+                
+                    if(totalMistakes == 0){
+                        printf("%s","The two files are identical\n");
+                    }else{
+                        printf("%d different lines found\n",totalMistakes);
+                    }
                   
-		    } else if( strcmp(flag, "-b") ==0) {    // Compare byte by byte
-                FILE *fPtr1;
-		        FILE *fPtr2;
-                fPtr1 = fopen(file1,"rb");  // Open in rad byte mode
-                fPtr2 = fopen(file2,"rb");
+		        } else if( strcmp(flag, "-b") ==0) {    // Compare byte by byte
+                    FILE *fPtr1;
+		            FILE *fPtr2;
+                    fPtr1 = fopen(file1,"rb");  // Open in rad byte mode
+                    fPtr2 = fopen(file2,"rb");
                 
-                unsigned long pos;
-                int c1, c2;
-                int totalMistakes= 0;
-                for (pos = 0;; pos++) {     // Read a byte from both files and compare
-                    c1 = getc(fPtr1);
-                    c2 = getc(fPtr2);
-                    if (c1 != c2){
-                    totalMistakes += 1;
-                }
-                if (c1 == EOF || c1 == EOF)
-                    break;
-                }
-                if (totalMistakes == 0) {
-                    printf("The two files are identical and have %lu bytes\n", pos);
-                } else{
-                    printf("The two files are different in %d bytes", totalMistakes);
-                } 
+                    unsigned long pos;
+                    int c1, c2;
+                    int totalMistakes= 0;
+                    for (pos = 0;; pos++) {     // Read a byte from both files and compare
+                        c1 = getc(fPtr1);
+                        c2 = getc(fPtr2);
+                        if (c1 != c2){
+                            totalMistakes += 1;
+                        }
+                        if (c1 == EOF || c1 == EOF)
+                            break;
+                    }
+                    if (totalMistakes == 0) {
+                        printf("The two files are identical and have %lu bytes\n", pos);
+                    } else{
+                        printf("The two files are different in %d bytes\n", totalMistakes);
+                    } 
+		        } else{
+		            printf("Given mode argument is invalid. Please use -a or -b.\n");
+		        }
 		    }
+		    
+		    
 		
         }// Part 6
 		else if(strcmp(command->name,"zoom")==0){
-		// -s save -o open -d delete
+		// -s save -o open -d delete -l list -c clear
 		    char *mode = command->args[1];
 		    char *class_name = command->args[2];
 		    
 	 	    char *fileName = "zoom_classes.txt";
-		  
+	 	    char *tempfileName = "tempzoom_classes.txt";
 		  
 		    FILE *fptr;
 		    fptr = fopen(fileName,"a+");    // Need both append and reading modes
-                 
-                   
+                         
 		    if( strcmp(mode, "-s") ==0) {   //save a class
-		   char *link = command->args[3];
-		   char *password = command->args[4];	
-		   char *saved_class[99999];
-		   strcpy(saved_class,class_name);
-		   strcat(saved_class," ");
-		   strcat(saved_class,link);
-		   strcat(saved_class," ");
-                   strcat(saved_class,password);  
-		   fprintf(fptr,"%s\n",saved_class);
-		   fclose(fptr);
-		    
+		        char *link = command->args[3];
+		        char *password = command->args[4];	
+		        char *saved_class[99999];
+		        strcpy(saved_class,class_name);
+		        strcat(saved_class," ");
+		        strcat(saved_class,link);
+		        strcat(saved_class," ");
+                strcat(saved_class,password); 
+                
+                char buffer[99999];
+                char *last_token;
+                while( fgets(buffer, 99999, fptr) != NULL ){  
+                    last_token = strtok( buffer, " " );
+                    if(strcmp(last_token, class_name)==0){    // If a given name is already an existing association
+                        fclose(fptr);   // To do not mess up with open files, close it and reopen it
+                        fptr = fopen(fileName,"a+");
+                        FILE *ftemp;    // Temporary file to hold the original file with deleted line
+                        ftemp = fopen(tempfileName,"a");
+                        char buffer2[99999];
+                        char *last_token2;
+                        while( fgets(buffer2, 99999, fptr) != NULL ){  
+                            last_token2 = strtok( buffer2, " " );
+                            if(strcmp(last_token2,class_name)!=0){    // Copy all the lines except the one with given name
+                                char line[512];
+                                strcpy(line, last_token2);
+                                last_token2 = strtok( NULL, " " );
+                                strcat(line, " ");
+                                strcat(line, last_token2);
+                                last_token2 = strtok( NULL, " " );
+                                strcat(line, " ");
+                                strcat(line, last_token2);
+                                fprintf(ftemp,"%s",line);
+                            }   
+                        }
+                        fclose(ftemp);  // Close both files
+                        fclose(fptr);
+                        rename(tempfileName,fileName);  // Change the name of temporary file to original file name
+                        fptr = fopen(fileName,"a"); // Reopen the file
+                    }                
+                 }
+                  
+		        fprintf(fptr,"%s\n",saved_class);
+		        fclose(fptr);
 		  
-        }else if( strcmp(mode, "-o") ==0) {
-         char buffer[99999];
-         
-        char *last_token;
-         while( fgets(buffer, 99999, fptr) != NULL ){  
-            last_token = strtok( buffer, " " );
+            } else if( strcmp(mode, "-o") ==0) {
+                char buffer[99999]; 
+                char *last_token;
+                while( fgets(buffer, 99999, fptr) != NULL ){  
+                    last_token = strtok( buffer, " " );
             
-            if(strcmp(last_token,class_name)==0){    
-                char *link =  strtok( NULL, " " );    
-                char *password  = strtok( NULL, " " );
-                printf("Password for the class is: %s\n",password);             
-                char *xdg[99999];
-                strcat(xdg,"xdg-open ");
-                strcat(xdg,link);
-                system(xdg);
+                    if(strcmp(last_token,class_name)==0){    
+                        char *link =  strtok( NULL, " " );    
+                        char *password  = strtok( NULL, " " );
+                        printf("Password for the class is: %s\n",password);             
+                        char *xdg[99999];
+                        strcat(xdg,"xdg-open ");
+                        strcat(xdg,link);
+                        system(xdg);
+                        fclose(fptr);
+                    }   
+                } 
+                     
+            } else if( strcmp(mode, "-d") == 0) { 
+                FILE *ftemp;
+                ftemp = fopen(tempfileName,"a");
+                
+                char buffer[99999];
+                char *last_token;
+                 while( fgets(buffer, 99999, fptr) != NULL ){  
+                    last_token = strtok( buffer, " " );
+                    if(strcmp(last_token,class_name)!=0){     // Copy all the lines except the one with given name
+                        char line[512];
+                        strcpy(line, last_token);
+                        last_token = strtok( NULL, " " );
+                        strcat(line," ");
+                        strcat(line, last_token);
+                        last_token = strtok( NULL, " " );
+                        strcat(line," ");
+                        strcat(line, last_token);
+                        fprintf(ftemp,"%s",line);
+                    }   
+                 }
+                 fclose(ftemp);
+                 fclose(fptr);
+                 rename(tempfileName,fileName);   
+                            
+            } else if( strcmp(mode, "-l") == 0){
+                char buffer[99999];
+                 while( fgets(buffer, 99999, fptr) != NULL ){  
+                    printf("%s", buffer);               // Prints all the line                       
+                 }
+                 fclose(fptr);
+                 
+            } else if( strcmp(mode, "-c") == 0){
                 fclose(fptr);
-            }   
-         }      
-        } 
+                fptr = fopen(fileName,"w");     // Opening a file in writing mode removes all entries in the file,
+                fclose(fptr); 
+            
+            }
+            
+             
         }
         // Part 1
         else {
@@ -684,14 +769,14 @@ int process_command(struct command_t *command)
                 // path
                 int len = strlen(tok) + 2 + strlen(command->name);
                 char *file = malloc(len);
-                if (!file) {    // If file does not exist in given path, free the memory
-                    free(path);
+                if (!file) {    // If there is not enough memory to open the corresponding file, free the 
+                    free(path); // path variable and return.
                     return NULL;
                 }
         
                 sprintf(file, "%s/%s", tok, command->name);     // Desired format for wanted command
         
-                if (0 == access(file, X_OK)) {  // If file is openable
+                if (0 == access(file, X_OK)) {  // If file is openable, in the current location
                     free(path);
                     strcpy(location,file);  // Copy the location information and pass it to execv in below
                 }
