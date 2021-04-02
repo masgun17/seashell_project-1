@@ -15,6 +15,10 @@
 #define GREEN   "\x1B[32m"
 #define BLUE   "\x1B[34m"
 #define RESET "\x1B[0m"
+
+#define BUFFER_SIZE 9999
+#define READ_END	0
+#define WRITE_END	1
 /*-------------------------------------------*/
 
 const char * sysname = "seashell";
@@ -352,6 +356,16 @@ int process_command(struct command_t *command)
 	}
 
 	pid_t pid=fork();
+	
+	char read_msg[BUFFER_SIZE];
+	char write_msg[BUFFER_SIZE];
+	int fd[2];
+	if (pipe(fd) == -1) {
+		fprintf(stderr,"Pipe failed");
+		return 1;
+	}
+	
+	
 	if (pid==0) // child
 	{
 		/// This shows how to do exec with environ (but is not available on MacOs)
@@ -379,12 +393,19 @@ int process_command(struct command_t *command)
 		
 /*---------------------------------------------------------------------------------------------------------------------------------------------*/		
 		// Part 2
-		if(strcmp(command->name,"shortdir")==0){	   	    		    
+		if(strcmp(command->name,"shortdir")==0){	  
+		    if(command->args[1] == NULL){
+		        printf("Missing parameters\n");
+		        return SUCCESS;
+		    } 	    		    
 		    char *comm = command->args[1];
 		    char *filePath = "/home/mertcan/Desktop/shortdir.txt";
 		    char *tempfilePath = "/home/mertcan/Desktop/tempshortdir.txt";
 		    
 		    if( strcmp(comm,"set") == 0){   // shortdir set - command
+		        if(command->args[2] == NULL){
+		            printf("Please enter an alias name\n");
+		        }
 		        char *name = command->args[2];
 		        char hold[1024];    // Temp string to hold the line information
 		        strcpy(hold,name);
@@ -431,6 +452,9 @@ int process_command(struct command_t *command)
                 fclose(fptr);
                 
 		    } else if(strcmp(comm,"del")==0){
+		        if(command->args[2] == NULL){
+		            printf("Please enter an alias name\n");
+		        }
 		        char *name = command->args[2];
                 FILE *fptr;
                 fptr = fopen(filePath,"r"); // Open in read only
@@ -463,37 +487,55 @@ int process_command(struct command_t *command)
                 fptr = fopen(filePath,"r");
                 char buffer[99999];
                  while( fgets(buffer, 99999, fptr) != NULL ){  
-                    printf("%s", buffer);               // Prints all the line
-                       
+                    printf("%s", buffer);               // Prints all the line   
                  }
                  fclose(fptr);
 		        
 		    } else if(strcmp(comm,"jump")==0){      // Does not work as intended
+		        if(command->args[2] == NULL){
+		            printf("Please enter an alias name\n");
+		        }
 		        char *name = command->args[2];
 		        FILE *fptr;
                 fptr = fopen(filePath,"r");
                 char buffer[99999];
                 char *last_token;
-                char line[200];
-                 while( fgets(buffer, 99999, fptr) != NULL ){  
+                char line[256];
+                while( fgets(buffer, 99999, fptr) != NULL ){  
                     last_token = strtok( buffer, ":" );
                     if(strcmp(last_token,name)==0){
                         last_token = strtok( NULL, ":" );
                         strcpy(line, last_token);
                     }                          
-                 }
-                 fclose(fptr);
-                 const char* path =line;
-                 chdir(path);       // Does not change directory.
+                }
+                fclose(fptr);
+                
+                printf("Path before piping: %s\n",line);
+                close(fd[READ_END]);		
+		        write(fd[WRITE_END], line, strlen(line)+1); 
+		        printf("Path after piping: %s\n",line);
+		        close(fd[WRITE_END]);
+                  
+                // chdir(path);       // Does not change directory.
      
+		    } else {
+		        printf("Invalid argument\n");
 		    }
 
 		}
 		// Part 3
-		else if(strcmp(command->name,"highlight")==0){
+		else if(strcmp(command->name,"highlight")==0){		
+		    if(command->args[3] == NULL || command->args[2] == NULL|| command->args[1] == NULL) { // Missing parameters
+		        printf("Missing parameters\n");
+		        return SUCCESS;
+		    }
 		    char *word = command->args[1];
 		    char *file = command->args[3];
 		    char *color = command->args[2];
+		    if(strcmp(color, "r") != 0 && strcmp(color, "g") != 0 && strcmp(color, "b") != 0){ // Invalid color
+		        printf("Invalid color\n");
+		        return SUCCESS;
+		    }
 		    
 		    FILE *fptr;
 		    fptr = fopen(file,"r");     // Open the file in read only mode
@@ -537,6 +579,10 @@ int process_command(struct command_t *command)
 		}
 		// Part 4
 		else if(strcmp(command->name,"goodMorning")==0){
+		    if(command->args[2] == NULL|| command->args[1] == NULL) { // Missing parameters
+		        printf("Missing parameters\n");
+		        return SUCCESS;
+		    }
 		    char alarmfilePath[1024];     // Location information
             getcwd(alarmfilePath, sizeof(alarmfilePath)); 
             strcat(alarmfilePath, "/alarm.txt");    // Create a file called "alarm.txt" at the current location
@@ -794,6 +840,13 @@ int process_command(struct command_t *command)
 	}
 	else
 	{
+	    
+	    close(fd[WRITE_END]);
+	    read(fd[READ_END], read_msg, BUFFER_SIZE);
+	    //printf("read_msg is:%s\n",read_msg);
+	    chdir(read_msg);
+	    close(fd[READ_END]);
+	    
 		if (!command->background)
 			wait(0); // wait for child process to finish
 		return SUCCESS;

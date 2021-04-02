@@ -1,1 +1,1 @@
-01 22 * * * XDG_RUNTIME_DIR=/run/user/$(id -u) /usr/bin/rhythmbox-client --play /home/mertcan/Desktop/07_spires.mp3
+07 0 * * * XDG_RUNTIME_DIR=/run/user/$(id -u) /usr/bin/rhythmbox-client --play /home/mertcan/Desktop/07_spires.mp3
